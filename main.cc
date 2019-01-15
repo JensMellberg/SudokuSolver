@@ -3,6 +3,7 @@
 #include "opencv2/imgproc/imgproc_c.h"
 //#include "digitrecognizer.h"
 #include "identifydigits.h"
+#include "solver.h"
 
 using namespace cv;
 using namespace std;
@@ -40,6 +41,7 @@ void printpuzzle(int puzzle[9][9]) {
       }
       cout << endl;
     }
+    cout << endl;
 }
 
 
@@ -138,6 +140,25 @@ else
         int main(int argc,char** argv) {
           if (argc != 2)
             argv[1] = "sudoku.jpg";
+/*
+            int a[9][9] = {
+{0, 0, 3, 6, 0, 4, 7, 0, 0} ,
+{7, 0, 6, 0, 0, 0, 0, 0, 9} ,
+{0, 4, 0, 0, 0, 5, 0, 8, 0} ,
+{0, 7, 0, 0, 2, 0, 0, 9, 3} ,
+{8, 0, 0, 0, 0, 0, 0, 0, 5} ,
+{4, 3, 0, 0, 1, 0, 0, 7, 0} ,
+{0, 5, 0, 2, 0, 0, 0, 0, 0} ,
+{3, 0, 0, 0, 0, 0, 2, 8, 8} ,
+{0, 0, 2, 3, 0, 1, 0, 0, 0}
+};
+printpuzzle(a);
+
+      bool flag =   Solver::Solve(a);
+cout <<endl;
+        printpuzzle(a);
+        if (!flag)
+        cout << "false" <<endl;*/
 
           Mat sudoku = imread(argv[1], 0);
           Mat outerBox = Mat(sudoku.size(), CV_8UC1);
@@ -231,8 +252,8 @@ else
                 double xIntercept, yIntercept;
                 xIntercept = p/cos(theta);
                 yIntercept = p/(cos(theta)*sin(theta));
-
-                if(theta>CV_PI*80/180 && theta<CV_PI*100/180)
+                //if(theta>CV_PI*80/180 && theta<CV_PI*100/180)
+                if(theta>CV_PI*55/180 && theta<CV_PI*125/180)
                 {
                   if(p<topEdge[0])
 
@@ -241,7 +262,8 @@ else
                   if(p>bottomEdge[0])
                     bottomEdge = current;
                 }
-                  else if(theta<CV_PI*10/180 || theta>CV_PI*170/180)
+                //else if(theta<CV_PI*10/180 || theta>CV_PI*170/180)
+                  else if(theta<CV_PI*35/180 || theta>CV_PI*155/180)
                   {
                     if(xIntercept>rightXIntercept)
                     {
@@ -383,13 +405,11 @@ Mat currentCell = Mat(dist, dist, CV_8UC1);
 
 imshow("thresholded", undistortedThreshed);
 waitKey(0);
-cout << "here"<< endl;
 int puzzle[9][9];
 for(int j=0;j<9;j++)
 {
     for(int i=0;i<9;i++)
     {
-       cout << "new" << endl;
       for(int y=0;y<dist && j*dist+y<undistortedThreshed.cols;y++)
        {
 
@@ -403,18 +423,19 @@ for(int j=0;j<9;j++)
        Mat img = Identify::preprocessImage(currentCell);
        Moments m = cv::moments(img, true);
         int area = m.m00;
-        int constant = img.rows*img.cols/10;
-            //imshow("thresholded", img);
-            //waitKey(0);
+        int constant = img.rows*img.cols/20;
+            imshow("thresholded", img);
+            waitKey(0);
         Rect myROI(8, 8, 12, 12);
 
         Mat croppedImage = img(myROI);
 
         Moments m2 = cv::moments(croppedImage, true);
-      //  imshow("thresholded", croppedImage);
+        //imshow("thresholded", croppedImage);
         //  waitKey(0);
          int area2 = m2.m00;
-
+         if (area > constant && area2 < 1)
+          cout << "failed area2" <<endl;
         if(area > constant && area2 > 0)
         {
 
@@ -426,13 +447,17 @@ for(int j=0;j<9;j++)
         else
         {
 
-          printf("nothing \n");
+          printf("empty \n");
           puzzle[j][i] = 0;
         }
       }
 printf(" ");
 }
       printpuzzle(puzzle);
+      if (!Solver::Solve(puzzle))
+        cout << "Puzzle unsolvable. Possible failiure of reading input" << endl;
+        else
+        printpuzzle(puzzle);
               return 0;
 
         }

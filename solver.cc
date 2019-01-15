@@ -1,37 +1,13 @@
+#include <iostream>
+
 namespace Solver{
-  bool Solve(int puzzle[9][9]) {
-    return SolveSpec (puzzle, 0, 0);
-}
 
-void Increment(int* row, int* col) {
-  ++col;
-  if (col == 9) {
-    col = 0;
-    ++row;
-  }
-}
 
-bool SolveSpec(int puzzle[9][9], int row, int col) {
-  if (puzzle[col][row] != 0) {
-    Increment(&row, &col);
-    if (row == 9)
-      return true;
-    if SolveSpec(puzzle, row, col)
-     return true;
-  }
-  for (int nbr = 1; nbr < 10; ++nbr) {
-  puzzle[col][row] = nbr;
-   if (CheckRow(puzzle, row) && CheckCol(puzzle, col) && CheckBox(puzzle, row, col)) {
-     Increment(&row, &col);
-     if (row == 9)
-       return true;
-     if SolveSpec(puzzle, row, col)
-      return true;
-   }
-   puzzle[col][row] = 0;
-   return false;
- }
-}
+using namespace std;
+
+
+
+
 
 bool CheckRow(int puzzle[9][9], int row) {
   for (int i = 0; i < 9; ++i) {
@@ -66,8 +42,8 @@ bool CheckBox(int puzzle[9][9], int row, int col) {
     --col;
     int values[9];
     int count = 0;
-  for (int i = row; i < row+3; ++i)
-    for (int j = col; j < col+3; ++j) {
+  for (int i = col; i < col+3; ++i)
+    for (int j = row; j < row+3; ++j) {
       values[count] = puzzle[i][j];
       ++count;
     }
@@ -84,5 +60,53 @@ bool CheckBox(int puzzle[9][9], int row, int col) {
 
   return true;
 }
+
+void printpuzzle(int puzzle[9][9]) {
+  for (int i = 0; i < 9; ++i)
+    {
+      for (int j = 0; j < 9; ++j) {
+        if (puzzle[i][j] != 0)
+          cout << puzzle[i][j] << " ";
+        else
+          cout << "- ";
+      }
+      cout << endl;
+    }
+    cout << endl;
+}
+
+bool SolveSpec(int puzzle[9][9], int row, int col) {
+  int nextRow = row;
+  int nextCol = col;
+  ++nextCol;
+  if (nextCol == 9) {
+    nextCol = 0;
+    ++nextRow;
+  }
+  if (puzzle[col][row] != 0) {
+
+    if (nextRow == 9)
+      return true;
+    return SolveSpec(puzzle, nextRow, nextCol);
+  }
+  for (int nbr = 1; nbr < 10; ++nbr) {
+  puzzle[col][row] = nbr;
+   if (CheckRow(puzzle, row) && CheckCol(puzzle, col) && CheckBox(puzzle, row, col)) {
+
+     if (nextRow == 9)
+       return true;
+     if (SolveSpec(puzzle, nextRow, nextCol))
+      return true;
+   }
+ }
+ puzzle[col][row] = 0;
+ return false;
+}
+
+bool Solve(int puzzle[9][9]) {
+  return SolveSpec (puzzle, 0, 0);
+}
+
+
 
 }

@@ -92,7 +92,6 @@ namespace Identify {
                     if (rand() / double(RAND_MAX) <= PCT_TRAIN)
                     {
                         trainCells.push_back(digitImg);
-                        cout << "imgsize: "<< digitImg.rows << " "<< digitImg.cols << endl;
                         trainLabels.push_back(y + 1);
                     }
                     else
@@ -196,7 +195,6 @@ namespace Identify {
 
         for(int i=0;i<testResponse.rows;i++)
         {
-            cout << testResponse.at<float>(i,0) << " " << testLabels[i] << endl;
             if(testResponse.at<float>(i,0) == testLabels[i]){
                 count = count + 1;
             }
