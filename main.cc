@@ -47,7 +47,7 @@ void printpuzzle(int puzzle[9][9]) {
 
 
 
-void mergeRelatedLines(vector<Vec2f> *lines, Mat &img)
+void mergeRelatedLines(vector<Vec2f> *lines, Mat &image)
 {
   vector<Vec2f>::iterator current;
   for(current=lines->begin();current!=lines->end();current++)
@@ -62,7 +62,7 @@ void mergeRelatedLines(vector<Vec2f> *lines, Mat &img)
 
             pt1current.y = p1/sin(theta1);
 
-            pt2current.x=img.size().width;
+            pt2current.x=image.size().width;
             pt2current.y=-pt2current.x/tan(theta1) + p1/sin(theta1);
         }
         else
@@ -71,7 +71,7 @@ void mergeRelatedLines(vector<Vec2f> *lines, Mat &img)
 
             pt1current.x=p1/cos(theta1);
 
-            pt2current.y=img.size().height;
+            pt2current.y=image.size().height;
             pt2current.x=-pt2current.y/tan(theta1) + p1/cos(theta1);
 
         }
@@ -88,20 +88,21 @@ void mergeRelatedLines(vector<Vec2f> *lines, Mat &img)
                 {
                     pt1.x=0;
                     pt1.y = p/sin(theta);
-                    pt2.x=img.size().width;
+                    pt2.x=image.size().width;
                     pt2.y=-pt2.x/tan(theta) + p/sin(theta);
                 }
                 else
                 {
                     pt1.y=0;
                     pt1.x=p/cos(theta);
-                    pt2.y=img.size().height;
+                    pt2.y=image.size().height;
                     pt2.x=-pt2.y/tan(theta) + p/cos(theta);
                   }
+                  //check if distance between points is low enough
                     if(((double)(pt1.x-pt1current.x)*(pt1.x-pt1current.x) + (pt1.y-pt1current.y)*(pt1.y-pt1current.y)<64*64) &&
 ((double)(pt2.x-pt2current.x)*(pt2.x-pt2current.x) + (pt2.y-pt2current.y)*(pt2.y-pt2current.y)<64*64))
                 {
-                    // Merge the two
+                    // Merge the lines
                     (*current)[0] = ((*current)[0]+(*pos)[0])/2;
 
                     (*current)[1] = ((*current)[1]+(*pos)[1])/2;
@@ -118,7 +119,7 @@ void mergeRelatedLines(vector<Vec2f> *lines, Mat &img)
 
 
 
-void drawLine(Vec2f line, Mat &img, Scalar rgb = CV_RGB(0,0,255))
+void drawLine(Vec2f line, Mat &image, Scalar rgb = CV_RGB(0,0,255))
 {
 if(line[1]!=0)
 {
@@ -126,11 +127,11 @@ if(line[1]!=0)
 
     float c = line[0]/sin(line[1]);
 
-    cv::line(img, Point(0, c), Point(img.size().width, m*img.size().width+c), rgb);
+    cv::line(image, Point(0, c), Point(image.size().width, m*image.size().width+c), rgb);
 }
 else
 {
-    cv::line(img, Point(line[0], 0), Point(line[0], img.size().height), rgb);
+    cv::line(image, Point(line[0], 0), Point(line[0], image.size().height), rgb);
 }
 
 }
@@ -256,7 +257,6 @@ cout <<endl;
                 if(theta>CV_PI*55/180 && theta<CV_PI*125/180)
                 {
                   if(p<topEdge[0])
-
                   topEdge = current;
 
                   if(p>bottomEdge[0])
@@ -277,11 +277,20 @@ cout <<endl;
                     }
                   }
                 }
-    std::cout << topEdge[0] << " " << topEdge[1];
+    std::cout << topEdge[0] << " " << topEdge[1] << std::endl;
+    std::cout << bottomEdge[0] << " " << bottomEdge[1] << std::endl;
+    std::cout << leftEdge[0] << " " << leftEdge[1] << std::endl;
+    std::cout << rightEdge[0] << " " << rightEdge[1] << std::endl;
     drawLine(topEdge, sudoku, CV_RGB(0,0,128));
     drawLine(bottomEdge, sudoku, CV_RGB(0,0,128));
     drawLine(leftEdge, sudoku, CV_RGB(0,0,128));
     drawLine(rightEdge, sudoku, CV_RGB(0,0,128));
+
+
+    Vec2f line1(10,1.45);
+    drawLine(line1, sudoku, CV_RGB(0,255,0));
+
+    waitKey(0);
 
 
 
@@ -292,6 +301,8 @@ cout <<endl;
 
   int width=outerBox.size().width;
 
+
+  //Calculate points on lines, if theta is zero then we cannot divide the normal way
   if(leftEdge[1]!=0)
   {
     left1.x=0;        left1.y=leftEdge[0]/sin(leftEdge[1]);
@@ -323,6 +334,8 @@ cout <<endl;
   top1.x=0;        top1.y=topEdge[0]/sin(topEdge[1]);
   top2.x=width;    top2.y=-top2.x/tan(topEdge[1]) + top1.y;
 
+
+  //
 
   double leftA = left2.y-left1.y;
     double leftB = left1.x-left2.x;
@@ -390,7 +403,7 @@ cv::warpPerspective(sudoku, undistorted, cv::getPerspectiveTransform(src, dst), 
 //DigitRecognizer *dr = new DigitRecognizer();
 //bool b = dr->train("train-images.idx3-ubyte", "train-labels.idx1-ubyte");
 
-  Identify::TrainSVM("computerdigits.png",28);
+Identify::TrainSVM("computerdigits.png",28);
 
 
 Mat undistortedThreshed = undistorted.clone();
@@ -420,15 +433,14 @@ for(int j=0;j<9;j++)
                ptr[x] = undistortedThreshed.at<uchar>(j*dist+y, i*dist+x);
            }
        }
-       Mat img = Identify::preprocessImage(currentCell);
-       Moments m = cv::moments(img, true);
+       Mat image = Identify::preprocessImage(currentCell);
+       Moments m = cv::moments(image, true);
         int area = m.m00;
-        int constant = img.rows*img.cols/20;
-            imshow("thresholded", img);
-            waitKey(0);
+        int constant = image.rows*image.cols/20;
+
         Rect myROI(8, 8, 12, 12);
 
-        Mat croppedImage = img(myROI);
+        Mat croppedImage = image(myROI);
 
         Moments m2 = cv::moments(croppedImage, true);
         //imshow("thresholded", croppedImage);
@@ -439,7 +451,7 @@ for(int j=0;j<9;j++)
         if(area > constant && area2 > 0)
         {
 
-            int number = Identify::IdentifyDigit(img);
+            int number = Identify::IdentifyDigit(image);
             printf("%d \n", number);
             puzzle[j][i] = number;
 
@@ -450,6 +462,8 @@ for(int j=0;j<9;j++)
           printf("empty \n");
           puzzle[j][i] = 0;
         }
+        imshow("thresholded", image);
+          waitKey(0);
       }
 printf(" ");
 }
